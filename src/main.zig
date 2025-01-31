@@ -1,48 +1,69 @@
 const Interface = @import("interface.zig");
 const std = @import("std");
 
-const ActualInterface = Interface.Init(struct {
+const Shape = Interface.Init(struct {
     fn Create(Self: type) type {
         return struct {
             // function gets added to vtable
-            pub fn func1(self: Self) void {
-                self.vtab.func1(self.ptr);
+            pub fn perimeter(self: Self) isize {
+                return self.vtab.perimeter(self.ptr);
             }
 
-            pub fn func2(self: Self, number: isize) void {
-                self.vtab.func2(self.ptr, number);
+            pub fn area(self: Self) isize {
+                return self.vtab.area(self.ptr);
             }
 
             // underscore at the end of the function idicates that it is not added to the vtable
-            pub fn func3_(self: Self, number: isize) void {
-                self.func1();
-                self.func2(number);
+            pub fn printInfo_(self: Self) void {
+                std.debug.print("Shape. Area: {}. Perimeter: {}.\n", .{ self.area(), self.perimeter() });
             }
         };
     }
 }.Create);
 
-const Implementor = struct {
-    val: i32,
+const Rectangle = struct {
+    width: isize,
+    height: isize,
 
-    pub fn func1(self: *@This()) void {
-        std.debug.print("Hello World {}\n", .{self.val});
+    pub fn area(self: *@This()) isize {
+        return self.width * self.height;
     }
 
-    pub fn func2(self: *@This(), number: isize) void {
-        std.debug.print("Number: {} {}\n", .{ self.val, number });
+    pub fn perimeter(self: *@This()) isize {
+        return 2 * (self.width + self.height);
     }
 
-    pub fn actualInterface(self: *@This()) ActualInterface {
-        return ActualInterface.init(self);
+    pub fn shape(self: *@This()) Shape {
+        return Shape.init(self);
+    }
+};
+
+const Square = struct {
+    side: isize,
+
+    pub fn area(self: *@This()) isize {
+        return self.side * self.side;
+    }
+
+    pub fn perimeter(self: *@This()) isize {
+        return 4 * self.side;
+    }
+
+    pub fn shape(self: *@This()) Shape {
+        return Shape.init(self);
     }
 };
 
 pub fn main() !void {
-    var someStruct = Implementor{ .val = 10 };
+    var rect = Rectangle{ .width = 10, .height = 20 };
+    var square = Square{ .side = 10 };
 
-    const interface = someStruct.actualInterface();
-    interface.func1();
-    interface.func2(20);
-    interface.func3_(10);
+    var shape1 = rect.shape();
+    var shape2 = square.shape();
+
+    std.debug.print("Rectangle. Area: {}. Perimeter: {}.\n", .{ shape1.area(), shape1.perimeter() });
+    std.debug.print("Square. Area: {}. Perimeter: {}.\n", .{ shape2.area(), shape2.perimeter() });
+
+    shape1.printInfo_();
+    shape2.printInfo_();
 }
